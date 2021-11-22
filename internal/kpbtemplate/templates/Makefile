@@ -1,0 +1,22 @@
+INSTALL_DIR ?= /usr/bin
+PLUGIN_BIN ?= {{ .PluginName }}
+# if you want to execute gotest with verbosity, set this flag to `true`.
+TEST_VERBOSE ?= false
+
+build: format test $(PLUGIN_BIN)
+
+format:
+	go fmt ./...
+
+test:
+ifeq ($(TEST_VERBOSE), true)
+	go test -v ./...
+else
+	go test ./...
+endif
+
+$(PLUGIN_BIN):
+	go build -o $(PLUGIN_BIN) ./cmd/$(PLUGIN_BIN)/main.go
+
+install: $(PLUGIN_BIN)
+	mv $(PLUGIN_BIN) $(INSTALL_DIR)

@@ -1,0 +1,25 @@
+license: {{ .License }}
+packageName: {{ .PackageName }}
+root:
+  name: {{ .PluginName }}
+  year: {{ .Year }}
+  author: {{ .Author }}
+  defPath: internal/cmd/{{ .PluginName}}
+  children:
+  # you can add the subcommands into it
+  # - name: subcmd
+  #   defPath: internal/cmd/tmp/subcmd
+  #   year: 2021
+  #   author: you
+  #   description:
+  #     short: "short description"
+  #     long: "long description"
+  #   aliases:
+  #   - sc
+  #   args:
+  #   - name: arg1
+  #     type: string
+  #     index: 0
+  #   flags:
+  #   - name: verbose
+  #     type: uint
