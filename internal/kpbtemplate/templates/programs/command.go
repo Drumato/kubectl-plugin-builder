@@ -21,12 +21,21 @@ var (
 func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
         c := &cobra.Command{
                 Use:  "{{ .CommandName }}",
+
+                Aliases: []string {
+                {{- range .Aliases}}
+                        "{{ .Name }}",
+                {{- end }}
+                },
+
                 {{- if ne .Short ""}}
                 Short: "{{ .Short }}",
                 {{- end }}
+
                 {{- if ne .Long ""}}
                 Long: "{{ .Long }}",
                 {{- end }}
+
                 RunE: func(cmd *cobra.Command, args []string) error {
                         o := &options{streams: streams}
                         if err := o.Complete(cmd, args); err != nil {

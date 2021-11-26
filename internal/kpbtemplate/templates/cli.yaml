@@ -16,10 +16,6 @@ root:
   #     long: "long description"
   #   aliases:
   #   - sc
-  #   args:
-  #   - name: arg1
-  #     type: string
-  #     index: 0
   #   flags:
   #   - name: flag1
   #     type: string

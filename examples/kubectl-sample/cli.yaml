@@ -13,6 +13,9 @@ root:
     description:
       short: "short description"
       long: "long description"
+    aliases:
+    - sc
+    - sc1
     flags:
     - name: flag1
       type: string

@@ -49,6 +49,11 @@ type CommandData struct {
 	Long                string
 	Children            []CommandDataChildren
 	Flags               []CommandFlag
+	Aliases             []CommandAlias
+}
+
+type CommandAlias struct {
+	Name string
 }
 
 type CommandDataChildren struct {

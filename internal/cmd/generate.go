@@ -39,6 +39,16 @@ func (gco *generateCommandOptions) Complete(cmd *cobra.Command, args []string) e
 	}
 
 	gco.expected = expected
+
+	lb, err := license.ChooseLicenseBuilder(
+		gco.expected.License,
+		gco.expected.Root.Year,
+		gco.expected.Root.Author)
+	if err != nil {
+		return err
+	}
+	gco.license = lb
+
 	return nil
 }
 
@@ -82,13 +92,16 @@ func (gco *generateCommandOptions) generateCommandGo(cliCmd cli.CLIYamlCommand) 
 
 	children := gco.generateCommandChildrenFromYAML(cliCmd)
 	flags := gco.generateCommandFlagsFromYAML(cliCmd)
+	aliases := gco.generateCommandAliasesFromYAML(cliCmd)
 	data := &command.CommandData{
-		Short:       cliCmd.Description.Short,
-		Long:        cliCmd.Description.Long,
-		CommandName: cliCmd.Name,
-		PackageName: gco.expected.PackageName,
-		Children:    children,
-		Flags:       flags,
+		SourceHeaderLicense: gco.license.SourceFileHeader(),
+		Short:               cliCmd.Description.Short,
+		Long:                cliCmd.Description.Long,
+		CommandName:         cliCmd.Name,
+		PackageName:         gco.expected.PackageName,
+		Children:            children,
+		Flags:               flags,
+		Aliases:             aliases,
 	}
 	builder := command.NewCommandBuilder(path, data)
 
@@ -108,8 +121,9 @@ func (gco *generateCommandOptions) generateHandlerGo(command cli.CLIYamlCommand)
 	}
 
 	data := &handler.HandlerData{
-		PackageName: gco.expected.PackageName,
-		CommandName: command.Name,
+		SourceHeaderLicense: gco.license.SourceFileHeader(),
+		PackageName:         gco.expected.PackageName,
+		CommandName:         command.Name,
 	}
 	builder := handler.NewHandlerBuilder(path, data)
 
@@ -122,6 +136,18 @@ func (gco *generateCommandOptions) generateHandlerGo(command cli.CLIYamlCommand)
 
 func (gco *generateCommandOptions) CommandName() string {
 	return "generate"
+}
+
+func (gco *generateCommandOptions) generateCommandAliasesFromYAML(cliCmd cli.CLIYamlCommand) []command.CommandAlias {
+	aliases := make([]command.CommandAlias, len(cliCmd.Aliases))
+
+	for i, cliAlias := range cliCmd.Aliases {
+		aliases[i] = command.CommandAlias{
+			Name: cliAlias,
+		}
+	}
+
+	return aliases
 }
 
 func (gco *generateCommandOptions) generateCommandChildrenFromYAML(cliCmd cli.CLIYamlCommand) []command.CommandDataChildren {
