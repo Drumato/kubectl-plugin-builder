@@ -90,13 +90,6 @@ func (gco *generateCommandOptions) generateCommandGo(cliCmd cli.CLIYamlCommand) 
 		Children:    children,
 		Flags:       flags,
 	}
-
-	for _, cliChild := range cliCmd.Children {
-		data.Children = append(data.Children, command.CommandDataChildren{
-			Name:    cliChild.Name,
-			DefPath: cliChild.DefPath,
-		})
-	}
 	builder := command.NewCommandBuilder(path, data)
 
 	if err := builder.Build(); err != nil {
@@ -107,6 +100,8 @@ func (gco *generateCommandOptions) generateCommandGo(cliCmd cli.CLIYamlCommand) 
 }
 
 func (gco *generateCommandOptions) generateHandlerGo(command cli.CLIYamlCommand) error {
+	// we mustn't replace the existing handler.go
+	// because the file may be overwritten by the user.
 	path := fmt.Sprintf("%s/handler.go", command.DefPath)
 	if _, err := os.Stat(path); err == nil {
 		return nil

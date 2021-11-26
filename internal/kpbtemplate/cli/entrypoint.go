@@ -42,7 +42,7 @@ func (eb *EntrypointBuilder) Execute() error {
 }
 
 type EntrypointData struct {
-	PackageName            string
-	PluginName             string
-	RootCommandNameTrimmed string
+	PackageName     string
+	PluginName      string
+	RootCommandName string
 }

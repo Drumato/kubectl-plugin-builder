@@ -42,9 +42,9 @@ func (cyb *CLIYamlBuilder) Execute() error {
 }
 
 type CLIYamlData struct {
-	RootCommandNameTrimmed string
-	Author                 string
-	Year                   uint
-	License                string
-	PackageName            string
+	RootCommandName string
+	Author          string
+	Year            uint
+	License         string
+	PackageName     string
 }

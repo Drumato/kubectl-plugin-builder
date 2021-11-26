@@ -1,14 +1,14 @@
 license: {{ .License }}
 packageName: {{ .PackageName }}
 root:
-  name: {{ .RootCommandNameTrimmed }}
+  name: {{ .RootCommandName }}
   year: {{ .Year }}
   author: {{ .Author }}
-  defPath: internal/cmd/{{ .RootCommandNameTrimmed }}
+  defPath: internal/cmd/{{ .RootCommandName }}
   children:
   # you can add the subcommands into it
   # - name: subcmd
-  #   defPath: internal/cmd/tmp/subcmd
+  #   defPath: internal/cmd/{{ .RootCommandName }}/subcmd
   #   year: 2021
   #   author: you
   #   description:
@@ -24,3 +24,8 @@ root:
   #   - name: flag1
   #     type: string
   #     description: controls the subcmd's behavior
+  #   children:
+  #   - name: subsubcmd
+  #     year: {{ .Year }}
+  #     author: {{ .Author }}
+  #     defPath: internal/cmd/{{ .RootCommandName }}/subcmd/subsubcmd

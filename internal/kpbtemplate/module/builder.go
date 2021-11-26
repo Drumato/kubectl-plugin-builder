@@ -8,9 +8,16 @@ import (
 )
 
 const (
-	defaultGoVersion         = "1.17"
+	DefaultGoVersion         = "1.17"
 	defaultCobraVersion      = "1.2.1"
 	defaultCLIRuntimeVersion = "0.22.3"
+)
+
+var (
+	DefaultRequires = []GoModuleRequire{
+		{Name: "github.com/spf13/cobra", Version: defaultCobraVersion},
+		{Name: "k8s.io/cli-runtime", Version: defaultCLIRuntimeVersion},
+	}
 )
 
 type GoModuleBuilder struct {
@@ -56,15 +63,4 @@ type GoModuleTemplateData struct {
 type GoModuleRequire struct {
 	Name    string
 	Version string
-}
-
-func NewGoModuleTemplateData(pkgName string) *GoModuleTemplateData {
-	return &GoModuleTemplateData{
-		PackageName: pkgName,
-		GoVersion:   defaultGoVersion,
-		Requires: []GoModuleRequire{
-			{Name: "github.com/spf13/cobra", Version: defaultCobraVersion},
-			{Name: "k8s.io/cli-runtime", Version: defaultCLIRuntimeVersion},
-		},
-	}
 }

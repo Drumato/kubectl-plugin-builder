@@ -38,11 +38,11 @@ var (
 )
 
 type newCommandOptions struct {
-	args                   []string
-	license                license.LicenseBuilder
-	pkgName                string
-	rootCommandName        string
-	rootCommandNameTrimmed string
+	args            []string
+	license         license.LicenseBuilder
+	pkgName         string
+	pluginName      string
+	rootCommandName string
 }
 
 var _ Options = &newCommandOptions{}
@@ -56,14 +56,17 @@ func newNewCommand() *cobra.Command {
 }
 
 func (nco *newCommandOptions) Complete(cmd *cobra.Command, args []string) error {
-	nco.args = args
-	if len(nco.args) != 1 {
+	if len(args) != 1 {
 		return fmt.Errorf("you must specify a package name")
 	}
+	nco.args = args
 	nco.pkgName = nco.args[0]
-	rootCommandName := filepath.Base(nco.pkgName)
-	nco.rootCommandName = rootCommandName
-	nco.rootCommandNameTrimmed = strings.TrimPrefix(rootCommandName, "kubectl-")
+
+	// `github.com/Drumato/kubectl-sample` -> `kubectl-sample`
+	pluginName := filepath.Base(nco.pkgName)
+	nco.pluginName = pluginName
+	nco.rootCommandName = strings.TrimPrefix(pluginName, "kubectl-")
+
 	return nil
 }
 
@@ -107,12 +110,12 @@ func (nco *newCommandOptions) makePackageDirs() error {
 		return err
 	}
 
-	rootCmdDir := fmt.Sprintf("internal/cmd/%s", nco.rootCommandNameTrimmed)
+	rootCmdDir := fmt.Sprintf("internal/cmd/%s", nco.rootCommandName)
 	if err := os.MkdirAll(rootCmdDir, 0o755); err != nil {
 		return err
 	}
 
-	mainDir := fmt.Sprintf("cmd/%s", nco.rootCommandName)
+	mainDir := fmt.Sprintf("cmd/%s", nco.pluginName)
 	if err := os.MkdirAll(mainDir, 0o755); err != nil {
 		return err
 	}
@@ -181,33 +184,41 @@ func (nco *newCommandOptions) chooseBuilder(mode uint) kpbtemplate.Builder {
 	case licenseMode:
 		return nco.license
 	case goModuleMode:
-		data := module.NewGoModuleTemplateData(nco.pkgName)
+		data := &module.GoModuleTemplateData{
+			PackageName: nco.pkgName,
+			GoVersion:   module.DefaultGoVersion,
+			Requires:    module.DefaultRequires,
+		}
 		return module.NewGoModuleBuilder("go.mod", data)
 	case gitIgnoreMode:
-		data := gitignore.NewGitIgnoreData(nco.rootCommandName)
+		data := &gitignore.GitIgnoreData{
+			ExecutableName: nco.pluginName,
+		}
 		return gitignore.NewGitIgnoreBuilder(".gitignore", data)
 	case makeFileMode:
-		data := makefile.NewMakefileData(filepath.Base(nco.pkgName))
+		data := &makefile.MakefileData{
+			PluginName: filepath.Base(nco.pkgName),
+		}
 		return makefile.NewMakefileBuilder("Makefile", data)
 	case rootCommandPkgMode:
 		data := &command.CommandData{
 			SourceHeaderLicense: nco.license.SourceFileHeader(),
-			CommandName:         nco.rootCommandNameTrimmed,
+			CommandName:         nco.rootCommandName,
 			PackageName:         nco.pkgName,
 			Short:               "short description",
 			Long:                "long description",
 			Children:            []command.CommandDataChildren{},
 		}
 
-		path := fmt.Sprintf("internal/cmd/%s/command.go", nco.rootCommandNameTrimmed)
+		path := fmt.Sprintf("internal/cmd/%s/command.go", nco.rootCommandName)
 		return command.NewCommandBuilder(path, data)
 	case rootCommandHandlerPkgMode:
 		data := &handler.HandlerData{
 			SourceHeaderLicense: nco.license.SourceFileHeader(),
-			CommandName:         nco.rootCommandNameTrimmed,
+			CommandName:         nco.rootCommandName,
 			PackageName:         nco.pkgName,
 		}
-		path := fmt.Sprintf("internal/cmd/%s/handler.go", nco.rootCommandNameTrimmed)
+		path := fmt.Sprintf("internal/cmd/%s/handler.go", nco.rootCommandName)
 		return handler.NewHandlerBuilder(path, data)
 	case cliNodeOptionsMode:
 		data := &node.NodeData{
@@ -217,20 +228,20 @@ func (nco *newCommandOptions) chooseBuilder(mode uint) kpbtemplate.Builder {
 		return node.NewNodeBuilder(path, data)
 	case cliYamlMode:
 		data := &cli.CLIYamlData{
-			RootCommandNameTrimmed: nco.rootCommandNameTrimmed,
-			Author:                 newAuthorFlag,
-			Year:                   newYearFlag,
-			License:                newLicenseFlag,
-			PackageName:            nco.pkgName,
+			RootCommandName: nco.rootCommandName,
+			Author:          newAuthorFlag,
+			Year:            newYearFlag,
+			License:         newLicenseFlag,
+			PackageName:     nco.pkgName,
 		}
 		return cli.NewCLIYamlBuilder("cli.yaml", data)
 	case mainPackageMode:
 		data := &cli.EntrypointData{
-			PluginName:             nco.rootCommandName,
-			PackageName:            nco.pkgName,
-			RootCommandNameTrimmed: nco.rootCommandNameTrimmed,
+			PluginName:      nco.pluginName,
+			PackageName:     nco.pkgName,
+			RootCommandName: nco.rootCommandName,
 		}
-		path := fmt.Sprintf("cmd/%s/main.go", nco.rootCommandName)
+		path := fmt.Sprintf("cmd/%s/main.go", nco.pluginName)
 		return cli.NewEntrypointBuilder(path, data)
 	default:
 		panic("unreachable")

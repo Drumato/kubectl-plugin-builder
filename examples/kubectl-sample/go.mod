@@ -1,4 +1,4 @@
-module github.com/Drumato/kubectl-ns
+module github.com/Drumato/kubectl-sample
 
 go 1.17
 

@@ -1,0 +1,19 @@
+license: MIT
+packageName: github.com/Drumato/kubectl-sample
+root:
+  name: sample
+  year: 2021
+  author: you
+  defPath: internal/cmd/sample
+  children:
+  - name: subcmd
+    defPath: internal/cmd/sample/subcmd
+    year: 2021
+    author: you
+    description:
+      short: "short description"
+      long: "long description"
+    flags:
+    - name: flag1
+      type: string
+      description: controls the subcmd's behavior
