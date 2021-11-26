@@ -80,12 +80,15 @@ func (gco *generateCommandOptions) generateCommandGo(cliCmd cli.CLIYamlCommand) 
 		}
 	}
 
+	children := gco.generateCommandChildrenFromYAML(cliCmd)
+	flags := gco.generateCommandFlagsFromYAML(cliCmd)
 	data := &command.CommandData{
 		Short:       cliCmd.Description.Short,
 		Long:        cliCmd.Description.Long,
 		CommandName: cliCmd.Name,
 		PackageName: gco.expected.PackageName,
-		Children:    make([]command.CommandDataChildren, 0),
+		Children:    children,
+		Flags:       flags,
 	}
 
 	for _, cliChild := range cliCmd.Children {
@@ -124,4 +127,47 @@ func (gco *generateCommandOptions) generateHandlerGo(command cli.CLIYamlCommand)
 
 func (gco *generateCommandOptions) CommandName() string {
 	return "generate"
+}
+
+func (gco *generateCommandOptions) generateCommandChildrenFromYAML(cliCmd cli.CLIYamlCommand) []command.CommandDataChildren {
+	children := make([]command.CommandDataChildren, len(cliCmd.Children))
+
+	for i, cliChild := range cliCmd.Children {
+		children[i] = command.CommandDataChildren{
+			Name:    cliChild.Name,
+			DefPath: cliChild.DefPath,
+		}
+	}
+
+	return children
+}
+
+func (gco *generateCommandOptions) generateCommandFlagsFromYAML(cliCmd cli.CLIYamlCommand) []command.CommandFlag {
+	flags := make([]command.CommandFlag, len(cliCmd.Flags))
+
+	for i, cliFlag := range cliCmd.Flags {
+		upperType, defaultValue := gco.genTVFromGoTypeString(cliFlag.Type)
+		flags[i] = command.CommandFlag{
+			Name:         cliFlag.Name,
+			UpperType:    upperType,
+			Type:         cliFlag.Type,
+			DefaultValue: defaultValue,
+			Description:  cliFlag.Description,
+		}
+	}
+
+	return flags
+}
+
+func (gco *generateCommandOptions) genTVFromGoTypeString(goType string) (string, string) {
+	switch goType {
+	case cli.GoTypeString:
+		return "String", "\"\""
+	case cli.GoTypeInt:
+		return "Int", "0"
+	case cli.GoTypeUInt:
+		return "Uint", "0"
+	default:
+		panic("unreachable!")
+	}
 }

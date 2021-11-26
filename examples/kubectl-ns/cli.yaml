@@ -6,6 +6,10 @@ root:
   author: you
   defPath: internal/cmd/kubectl-ns
   children:
+  flags:
+  - name: flag1
+    type: string
+    description: controls the command's behavior
   # you can add the subcommands into it
   # - name: subcmd
   #   defPath: internal/cmd/tmp/subcmd
@@ -21,5 +25,6 @@ root:
   #     type: string
   #     index: 0
   #   flags:
-  #   - name: verbose
-  #     type: uint
+  #   - name: flag1
+  #     type: string
+  #     description: controls the subcmd's behavior

@@ -11,6 +11,12 @@ import (
         {{- end }}
 )
 
+var (
+        {{- range .Flags }}
+        {{ $.CommandName }}{{ .Name }}Flag {{ .Type }}
+        {{- end }}
+)
+
 // WARNING: don't rename this function.
 func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
         c := &cobra.Command{
@@ -37,6 +43,15 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 
         {{- range .Children }}
         c.AddCommand({{ .Name }}.NewCommand(streams))
+        {{- end }}
+
+        {{- range .Flags }}
+        c.Flags().{{ .UpperType }}Var(
+                &{{ $.CommandName }}{{ .Name }}Flag,
+                "{{ .Name }}",
+                {{ .DefaultValue }},
+                "{{ .Description }}",
+        )
         {{- end }}
 
         return c

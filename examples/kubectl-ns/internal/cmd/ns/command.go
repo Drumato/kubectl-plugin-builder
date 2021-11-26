@@ -30,6 +30,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+const ()
+
 // WARNING: don't rename this function.
 func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 	c := &cobra.Command{

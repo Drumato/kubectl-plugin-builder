@@ -48,9 +48,18 @@ type CommandData struct {
 	Short               string
 	Long                string
 	Children            []CommandDataChildren
+	Flags               []CommandFlag
 }
 
 type CommandDataChildren struct {
 	Name    string
 	DefPath string
+}
+
+type CommandFlag struct {
+	Name         string
+	UpperType    string
+	Type         string
+	DefaultValue string
+	Description  string
 }

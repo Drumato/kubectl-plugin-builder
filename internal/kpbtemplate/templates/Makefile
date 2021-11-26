@@ -1,5 +1,7 @@
+SHELL := /bin/bash
 INSTALL_DIR ?= /usr/bin
 PLUGIN_BIN ?= {{ .PluginName }}
+PLUGIN_DEPENDENCIES := $(shell find . -name "*.go")
 # if you want to execute gotest with verbosity, set this flag to `true`.
 TEST_VERBOSE ?= false
 
@@ -15,7 +17,7 @@ else
 	go test ./...
 endif
 
-$(PLUGIN_BIN):
+$(PLUGIN_BIN): $(PLUGIN_DEPENDENCIES)
 	go build -o $(PLUGIN_BIN) ./cmd/$(PLUGIN_BIN)/main.go
 
 install: $(PLUGIN_BIN)

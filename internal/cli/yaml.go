@@ -1,5 +1,11 @@
 package cli
 
+const (
+	GoTypeString = "string"
+	GoTypeInt    = "int"
+	GoTypeUInt   = "uint"
+)
+
 type CLIYaml struct {
 	Root        CLIYamlCommand `yaml:"root"`
 	License     string         `yaml:"license"`
@@ -30,6 +36,7 @@ type CLIYamlCommandArgument struct {
 }
 
 type CLIYamlCommandFlag struct {
-	Name string `yaml:"name"`
-	Type string `yaml:"type"`
+	Name        string `yaml:"name"`
+	Type        string `yaml:"type"`
+	Description string `yaml:"description"`
 }

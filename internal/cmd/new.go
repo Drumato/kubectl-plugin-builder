@@ -216,9 +216,13 @@ func (nco *newCommandOptions) chooseBuilder(mode uint) kpbtemplate.Builder {
 		path := "internal/cmd/node.go"
 		return node.NewNodeBuilder(path, data)
 	case cliYamlMode:
-		data := cli.NewCLIYamlData(filepath.Base(nco.pkgName), newAuthorFlag, newYearFlag)
-		data.License = newLicenseFlag
-		data.PackageName = nco.pkgName
+		data := &cli.CLIYamlData{
+			RootCommandNameTrimmed: nco.rootCommandNameTrimmed,
+			Author:                 newAuthorFlag,
+			Year:                   newYearFlag,
+			License:                newLicenseFlag,
+			PackageName:            nco.pkgName,
+		}
 		return cli.NewCLIYamlBuilder("cli.yaml", data)
 	case mainPackageMode:
 		data := &cli.EntrypointData{

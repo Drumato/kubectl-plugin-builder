@@ -1,10 +1,10 @@
 license: {{ .License }}
 packageName: {{ .PackageName }}
 root:
-  name: {{ .PluginName }}
+  name: {{ .RootCommandNameTrimmed }}
   year: {{ .Year }}
   author: {{ .Author }}
-  defPath: internal/cmd/{{ .PluginName}}
+  defPath: internal/cmd/{{ .RootCommandNameTrimmed }}
   children:
   # you can add the subcommands into it
   # - name: subcmd
@@ -21,5 +21,6 @@ root:
   #     type: string
   #     index: 0
   #   flags:
-  #   - name: verbose
-  #     type: uint
+  #   - name: flag1
+  #     type: string
+  #     description: controls the subcmd's behavior

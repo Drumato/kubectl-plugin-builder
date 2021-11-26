@@ -42,17 +42,9 @@ func (cyb *CLIYamlBuilder) Execute() error {
 }
 
 type CLIYamlData struct {
-	PluginName  string
-	Author      string
-	Year        uint
-	License     string
-	PackageName string
-}
-
-func NewCLIYamlData(pluginName string, author string, year uint) *CLIYamlData {
-	return &CLIYamlData{
-		PluginName: pluginName,
-		Author:     author,
-		Year:       year,
-	}
+	RootCommandNameTrimmed string
+	Author                 string
+	Year                   uint
+	License                string
+	PackageName            string
 }
