@@ -79,7 +79,7 @@ func (nco *newCommandOptions) Validate() error {
 }
 
 func (nco *newCommandOptions) Run() error {
-	if nco.ProjectAlreadyExists() {
+	if nco.projectAlreadyExists() {
 		fmt.Printf("Project %s alredy exists.", nco.pkgName)
 		return nil
 	}
@@ -151,7 +151,7 @@ func (nco *newCommandOptions) generateFiles() error {
 	return nil
 }
 
-func (nco *newCommandOptions) ProjectAlreadyExists() bool {
+func (nco *newCommandOptions) projectAlreadyExists() bool {
 	files := []string{
 		"go.mod", "Makefile", ".gitignore", "cli.yaml",
 		"internal", "cmd",

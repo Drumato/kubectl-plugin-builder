@@ -11,6 +11,7 @@ func NewRootCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 		&rootCommandOptions{},
 		completion.NewRootCommand(streams),
 		newNewCommand(),
+		newAddCommand(),
 		newGenerateCommand(),
 	)
 }

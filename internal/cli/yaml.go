@@ -7,9 +7,9 @@ const (
 )
 
 type CLIYaml struct {
-	Root        CLIYamlCommand `yaml:"root"`
-	License     string         `yaml:"license"`
 	PackageName string         `yaml:"packageName"`
+	License     string         `yaml:"license"`
+	Root        CLIYamlCommand `yaml:"root"`
 }
 
 type CLIYamlCommand struct {
