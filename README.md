@@ -18,12 +18,10 @@ $ mv bin/kubectl-plugin-builder <PATH> # /usr/bin, etc
 
 - `kubectl-plugin-builder new` command for initialization of a plugin's project
 - `kubectl-plugin-builder generate` command for code-generation declaratively
+- `kubectl-plugin-builder CMD_NAME CMD_PARENT` for addition a new command to the plugin
 
 ## Roadmap
 
-- [ ] commands
-  - [ ] `add CMD_NAME` ... add command that add a new command to the yaml
-    - `--parent` flag
 - [ ] api client support by default(`cli-runtime/pkg/client`)
 - [ ] config flags support by default(`cli-runtime/pkg/genericclioptions`)
 - [ ] auto testcode generation from yaml

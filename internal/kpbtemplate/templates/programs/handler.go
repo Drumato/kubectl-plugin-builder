@@ -10,17 +10,22 @@ import (
         "k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
+// this assignment ensures 
+// options struct must implement CLINodeOptions interface.
 var _ cmd.CLINodeOptions = &options{}
+
 type options struct {
         cmd     *cobra.Command
         args    []string
         streams *genericclioptions.IOStreams
+        outputMode cmd.OutputMode
 }
 
 // Complete implements CLINodeOptions interface.
 func (o *options) Complete(cmd *cobra.Command, args []string) error {
         o.cmd = cmd
         o.args = args
+        o.outputMode = {{ .CommandName }}OutputModeFlag
         return nil
 }
 
@@ -31,6 +36,13 @@ func (o *options) Validate() error {
 
 // Run implements CLINodeOptions interface.
 func (o *options) Run() error {
-        _, err := fmt.Fprintln(o.streams.Out, o.cmd.Use)
-        return err
+        switch (o.outputMode) {
+        // case cmd.OutputModeJSON:
+        // case cmd.OutputModeYAML:
+        case cmd.OutputModeNormal:
+                _, err := fmt.Fprintf(o.streams.Out, "%s\n", o.cmd.Use)
+                return err
+        }
+
+        return fmt.Errorf("unsupported output format '%s' found", o.outputMode)
 }

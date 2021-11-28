@@ -6,12 +6,17 @@ import (
         "github.com/spf13/cobra"
 
         "k8s.io/cli-runtime/pkg/genericclioptions"
+        "{{ .PackageName }}/internal/cmd"
         {{- range .Children }}
         "{{ $.PackageName }}/{{ .DefPath }}"
         {{- end }}
 )
 
 var (
+        // {{ .CommandName }}OutputModeFlag provides 
+        // user-passed option to options.
+        {{ .CommandName }}OutputModeFlag string
+
         {{- range .Flags }}
         {{ $.CommandName }}{{ .Name }}Flag {{ .Type }}
         {{- end }}
@@ -23,16 +28,16 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
                 Use:  "{{ .CommandName }}",
 
                 Aliases: []string {
-                {{- range .Aliases}}
+                {{- range .Aliases }}
                         "{{ .Name }}",
                 {{- end }}
                 },
 
-                {{- if ne .Short ""}}
+                {{- if ne .Short "" }}
                 Short: "{{ .Short }}",
                 {{- end }}
 
-                {{- if ne .Long ""}}
+                {{- if ne .Long "" }}
                 Long: "{{ .Long }}",
                 {{- end }}
 
@@ -50,9 +55,28 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
                 },
         }
 
+        hangChildrenOnCommand(c, streams)
+        defineCommandFlags(c)
+
+        return c
+}
+
+// hangChildrenOnCommand enumerates command's children and attach them into it.
+func hangChildrenOnCommand(c *cobra.Command, streams *genericclioptions.IOStreams) {
         {{- range .Children }}
         c.AddCommand({{ .Name }}.NewCommand(streams))
         {{- end }}
+}
+
+// defineCommandFlags declares primitive flags.
+func defineCommandFlags(c *cobra.Command) {
+        c.Flags().StringVarP(
+                &{{ .CommandName }}OutputModeFlag,
+                "output",
+                "o",
+                cmd.OutputModeNormal,
+                "the command's output mode",
+        )
 
         {{- range .Flags }}
         c.Flags().{{ .UpperType }}Var(
@@ -62,6 +86,4 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
                 "{{ .Description }}",
         )
         {{- end }}
-
-        return c
 }
