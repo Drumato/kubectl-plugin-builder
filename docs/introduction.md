@@ -1,6 +1,27 @@
-# Getting Started
+# Introduction
 
-kubectl-plugin-builder is a cli application that helps us to develop a kubectl plugin.
+kubectl-plugin-builder is a CLI application that helps us to develop a kubectl plugin.
+This document describes you to start development a kubectl plugin with the builder.
+The builder is so small and simple so maybe you won't need to read the entire of this document :)  
+
+- [Background](#background)
+- [Getting Started](#getting-started)
+- [More Information](#more-information)
+
+### What is a kubectl plugin
+
+You may know Kubernetes/k8s provides users several ways to extend k8s cluster(s).
+The most famous mechanism is k8s custom controller.
+
+Another one is **kubectl plugin**.
+The extensibility is called **kubectl plugin**.
+A kubectl plugin is just an executable that is placed in `PATH` kubectl can recognize.
+Then you can use the plugin like `kubectl <plugin-name>`.
+That mechanism unifies the operation btw kubectl and its plugins.
+K8s operators just uses kubectl consistently.  
+
+### How we start to develop a new plugin
+
 In general, a kubectl plugin can be implemented by these ways.
 
 - shell script
@@ -9,36 +30,56 @@ In general, a kubectl plugin can be implemented by these ways.
 
 I prefer you to use Go for implementing the plugins.
 because most plugins are implemented for simplifying daily operaions of the k8s clusters,
-so the plugins must have high maintainability and be easy to use, extend and understand.
+so the plugins must have high maintainability and be easy to use/extend/understand.
 [postfinance/kubectl-ns](https://github.com/postfinance/kubectl-ns), [corneliusweig/rakkess]() and many other impls are written by Go.
-We know the practical way to implement a new plugin like those plugins.  
+there are many tips to implement a new plugin.  
 
-but the practical way needs some boilerplates.  
+- unifies each command's structure into **CVR** model
+  - CVR stands for `Complete/Validate/Run`
+- capture each command's I/O into the in-memory buffer
+- use `github.com/spf13/cobra` to construct a CLI application easily
+- use `kubernetes/cli-runtime`
 
-- initializing `kubernetes/cli-runtime` apis
+## What kubectl-plugin-builder achieves
+
+We know the practical way needs a few boilerplates.  
+
+- initializing `kubernetes/cli-runtime` components
   - api client
-  - common cli flags like `-n/--namespace`
+  - common CLI flags like `-n/--namespace`
 - following the [spf13/cobra](https://github.com/spf13/cobra)'s best-practice architecture
 
-## Initialization a Project
+For K8s operators, they only want to focus on the core mechanism of the plugin.
+So kubectl-plugin-builder provides some features to avoid boilerplates like above.
 
-first of all, you should make a directory that is the project's root.  
+- following the best-practices **by default**
+  - `kubernetes/cli-runtime` initialization
+  - [spf13/cobra](https://github.com/spf13/cobra) CLI construction
+- each command's output mode
+  - you can select the command's output format with specifying `--output-mode=<normal/json/yaml/etc>`
+
+These features will be described later.  
+
+---
+
+## Getting Started
+
+This section I'll describe how to start development with kubectl-plugin-builder.  
+
+### Initialization a Project
+
+First of all we should execute `kubectl-plugin-builder new <module_name>` to initialize a project.  
 
 ```shell
 $ mkdir kubectl-demo && cd kubectl-demo
-```
-
-and now we can initialize the project with `kubectl-plugin-builder new` command!  
-
-```shell
 $ kubectl-plugin-builder new github.com/Drumato/kubectl-demo
 Initialization Complete!
 Run `go mod tidy` to install third-party modules.
-$ go mod tidy # to install dependencies.
 ```
 
-Let's see the directory's structure.
-the builder generates some files for starting the development of the project.  
+Now you can see the output that wants us to execute `go mod tidy` command.
+and after it we can build the project.
+But before building, Let's see the project's structure.  
 
 ```shell
 $ tree
@@ -57,55 +98,89 @@ $ tree
 ├── LICENSE
 └── Makefile
 
-5 directories, 8 files
+5 directories, 8 file
 ```
 
-- `cli.yaml` ... specifies the cli command and its architecture
-  - kubectl-plugin-builder refers it and generate Go programs declaratively
-- `cmd/<plugin-name>/main.go` ... this plugin's entrypoint
-- `internal/cmd/node.go` ... defines `CLINodeOptions` interface
-  - all commands in the project should implement the interface
-- `internal/cmd/<command>` ... the root-command's package
-  - `command.go` ... the declaration of `*cobra.Command`
-    - the file is automatically created by builder so you mustn't edit this
-  - `handler.go` ... the command's handlers and you can modify the codes
-- `Makefile`
-  - `build` ... the default task that builds the plugin
-  - `generate` ... executes `kubectl-plugin-builder generate`
-  - `test` ... executes the tests in the project
-    - controls the verbosity with `TEST_VERBOSE={true,false}` argument
-  - `install` ... install the plugin to `INSTALL_DIR`
+Some files generated automatically and each file is so simple and trivial.  
 
-Let's build the plugin and print the help.  
+- `cli.yaml` ... The specification of the project's CLI architecture
+  - this files is used in the `make generate` task
+- `LICENSE` ... The license file
+  - The builder only support MIT license for now(but it's easy to extend)
+- `Makefile` ... Declares some tasks and users can use them for convenient development
+  - `format` ... formats all Go packages under the project
+  - `test` ... tests all Go packages under the project
+  - `build` ... builds the plugin
+  - `generate` ... generates Go programs declaratively
+  - `install` ... install the plugin into `INSTALL_DIR` (default: `/usr/bin`)
+- `internal/cmd/node.go` ... defines `CLINodeOptions` interface
+  - all commands should implement the interface
+- `internal/cmd/demo` ... defines the root command
+  - if the command name is started with `kubectl-` the builder strips it
+- `cmd/kubectl-demo/main.go` ... the plugin's entrypoint
+
+For now we can build the plugin with `make`.  
 
 ```shell
-$ make # format + test + generate + build
+$ go mod tidy
+$ make > /dev/null
 $ ./kubectl-demo -h
-Usage:
-  demo [flags]
-
-Flags:
-  -h, --help   help for demo
 ```
 
-## Modifying the command's handler
+Now let's dive into each Go program!
+Here's the source of `internal/cmd/node.go`.  
 
-Next we'll see the generated file `internal/cmd/demo/command.go`.
-the file includes the definition of `*cobra.Command`.
+```go
+// Code generated by kubectl-plugin-builder.
+/* LICENSE header(stripped) */
+package cmd
+
+import (
+        "github.com/spf13/cobra"
+)
+
+type CLINodeOptions interface {
+        Complete(cmd *cobra.Command, args []string) error
+        Validate() error
+        Run() error
+}
+
+type OutputMode = string
+
+const (
+        OutputModeNormal OutputMode = "normal"
+        // OutputModeJSON
+        // OutputModeYAML
+)
+```
+
+You can see the definition of `CLINodeOptions` , all commands in the project references the interface and implements it.
+The interface guide us to implement plugin commands in the practical way.
+Almost famous plugins follow the architecture.  
+
+- [kubectl-ns](https://github.com/postfinance/kubectl-ns/blob/v1.0.6/cmd/ns.go)
+- [ksniff](https://github.com/eldadru/ksniff/blob/v1.6.1/pkg/cmd/sniff.go)
+
+And `OutputMode` is used for switching the command's output.
+Let's look at `internal/cmd/demo/command.go`.  
 
 ```go
 // Code generated by kubectl-plugin-builder; DO NOT EDIT.
 
-// LICENSE stripped
+/* LICENSE HEADER(stripped) */
 package demo
 
 import (
         "github.com/spf13/cobra"
 
         "k8s.io/cli-runtime/pkg/genericclioptions"
+        "github.com/Drumato/kubectl-demo/internal/cmd"
 )
 
 var (
+        // demoOutputModeFlag provides 
+        // user-passed option to options.
+        demoOutputModeFlag string
 )
 
 // WARNING: don't rename this function.
@@ -115,6 +190,8 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
 
                 Aliases: []string {
                 },
+                Short: "short description",
+                Long: "long description",
 
                 RunE: func(cmd *cobra.Command, args []string) error {
                         o := &options{streams: streams}
@@ -130,73 +207,39 @@ func NewCommand(streams *genericclioptions.IOStreams) *cobra.Command {
                 },
         }
 
+        hangChildrenOnCommand(c, streams)
+        defineCommandFlags(c)
+
         return c
 }
-```
 
-now you can see the command's handler consists of three methods.  
-
-- `Complete(cmd *cobra.Command, args []string) error` ... it completes the parameters
-- `Validate() error` ... it validates whether the parameters matches the command's context
-- `Run() error` ... it runs the commands' core-behavior
-
-Next we'll modify the handler in `internal/cmd/demo/handler.go`.
-you may often edit the file because the file includes snippets of `Complete/Validate/Run`.
-
-```go
-// Code generated by kubectl-plugin-builder.
-
-// LICENSE stripped
-package demo
-
-import (
-        "fmt"
-
-        "github.com/Drumato/kubectl-demo/internal/cmd"
-        "github.com/spf13/cobra"
-        "k8s.io/cli-runtime/pkg/genericclioptions"
-)
-
-// for statically checks options struct must implements the interface 
-// at the compilation time.
-var _ cmd.CLINodeOptions = &options{}
-
-// options is used to hold the parameters about the command.
-type options struct {
-        cmd     *cobra.Command
-        args    []string
-        streams *genericclioptions.IOStreams
+// hangChildrenOnCommand enumerates command's children and attach them into it.
+func hangChildrenOnCommand(c *cobra.Command, streams *genericclioptions.IOStreams) {
 }
 
-// Complete implements CLINodeOptions interface.
-func (o *options) Complete(cmd *cobra.Command, args []string) error {
-        o.cmd = cmd
-        o.args = args
-        return nil
-}
-
-// Validate implements CLINodeOptions interface.
-func (o *options) Validate() error {
-        return nil
-}
-
-// Run implements CLINodeOptions interface.
-func (o *options) Run() error {
-        _, err := fmt.Fprintln(o.streams.Out, o.cmd.Use)
-        return err
+// defineCommandFlags declares primitive flags.
+func defineCommandFlags(c *cobra.Command) {
+        c.Flags().StringVarP(
+                &demoOutputModeFlag,
+                "output",
+                "o",
+                cmd.OutputModeNormal,
+                "the command's output mode",
+        )
 }
 ```
 
-Great!
-if you want to change the command's behavior, just edit only the file.
+there are some identifiers you should understand.  
 
-## Declarative CLI generation
+- `demoOutputModeFlag` ... the flag that controls the command's output mode
+- `NewCommand()` ... define the command
+  - please edit `cli.yaml` if you want to modify the command's description/aliases/etc
+- `hangChildrenOnCommand()` ... enumerates the command's children and attach them into it
+- `defineCommandFlags()` ... define command flags and attach them into the command
 
-finally I'll introduce you `kubectl-plugin-builder generate` command.
-the command generates go files declaratively and construct CLI architecture as you want.
-Let's see the mechanism.  
+### Edit the command
 
-let's see the initial content of `cli.yaml`.
+If you want some new flags, you can add by editing `cli.yaml`
 
 ```yaml
 license: MIT
@@ -206,98 +249,39 @@ root:
   year: 2021
   author: you
   defPath: internal/cmd/demo
+  flags:
+  - name: flag1 # added
+    type: string
+    description: controls root command behavior
+  - name: flag2 # added
+    type: string
+    description: controls root command behavior
   children:
-  # you can add the subcommands into it
-  # - name: subcmd
-  #   defPath: internal/cmd/demo/subcmd
-  #   year: 2021
-  #   author: you
-  #   description:
-  #     short: "short description"
-  #     long: "long description"
-  #   aliases:
-  #   - sc
-  #   flags:
-  #   - name: flag1
-  #     type: string
-  #     description: controls the subcmd's behavior
-  #   children:
-  #   - name: subsubcmd
-  #     year: 2021
-  #     author: you
-  #     defPath: internal/cmd/demo/subcmd/subsubcmd
 ```
 
-it seems just the command tree and easy to understand.
-the builder refers it and use it as the code-generations parameters.  
-
-- `name` ... the command name
-- `year, author` ... used in license (placed at the top of source file)
-- `defPath` ... the command package path
-- `flags` ... the cli flags that you want to control the command's behavior with them
-- `children` ... represents the relations btw parent-child
-
-Now let's modify the specification and creates some new commands.  
-
-```yaml
-license: MIT
-packageName: github.com/Drumato/kubectl-demo
-root:
-  name: demo
-  year: 2021
-  author: you
-  defPath: internal/cmd/demo
-  children:
-  - name: subcmd
-    defPath: internal/cmd/demo/subcmd
-    year: 2021
-    author: you
-    description:
-      short: "the sub-command for demo"
-      long: "this is a sub command for demo"
-    aliases:
-    - sc
-    flags:
-    - name: flag1
-      type: string
-      description: controls the subcmd's behavior
-    children:
-    - name: subsubcmd
-      year: 2021
-      author: you
-      defPath: internal/cmd/demo/subcmd/subsubcmd
-```
-
-and execute `kubectl-plugin-builder generate`.  
+And just execute `make` and you can see flags!
 
 ```shell
-$ kubectl-plugin-builder generate
-$ tree
-.
-├── cli.yaml
-├── cmd
-│   └── kubectl-demo
-│       └── main.go
-├── go.mod
-├── go.sum
-├── internal
-│   └── cmd
-│       ├── demo
-│       │   ├── command.go
-│       │   ├── handler.go
-│       │   └── subcmd
-│       │       ├── command.go
-│       │       ├── handler.go
-│       │       └── subsubcmd
-│       │           ├── command.go
-│       │           └── handler.go
-│       └── node.go
-├── kubectl-demo
-├── LICENSE
-└── Makefile
+$ make > /dev/null 
+$ ./kubectl-demo -h
+Usage:
+  demo [flags]
 
-7 directories, 14 files
-$ make
+Flags:
+      --flag1 string    controls root command behavior
+      --flag2 string    controls root command behavior
+  -h, --help            help for demo
+  -o, --output string   the command's output mode (default "normal")
+```
+
+### Declare a new command
+
+If you want to add a new command into the plugin,
+I prefer you to use `kubectl-plugin-builder add` instead of editing directly.
+
+```shell
+$ kubectl-plugin-builder add subcmd1 demo
+$ make > /dev/null 
 $ ./kubectl-demo -h
 Usage:
   demo [flags]
@@ -306,44 +290,26 @@ Usage:
 Available Commands:
   completion  generate the autocompletion script for the specified shell
   help        Help about any command
-  subcmd      the sub-command for demo
+  subcmd1     short description
 
 Flags:
-  -h, --help   help for demo
+      --flag1 string    controls root command behavior
+      --flag2 string    controls root command behavior
+  -h, --help            help for demo
+  -o, --output string   the command's output mode (default "normal")
 
 Use "demo [command] --help" for more information about a command.
-$ ./kubectl-demo subcmd -h
-this is a sub command for demo
-
-Usage:
-  demo subcmd [flags]
-  demo subcmd [command]
-
-Aliases:
-  subcmd, sc
-
-Available Commands:
-  subsubcmd   
-
-Flags:
-      --flag1 string   controls the subcmd's behavior
-  -h, --help           help for subcmd
-
-Use "demo subcmd [command] --help" for more information about a command.
-$ ./kubectl-demo subcmd subsubcmd -h
-Usage:
-  demo subcmd subsubcmd [flags]
-
-Flags:
-  -h, --help   help for subsubcmd
 ```
 
-Now we can see these factors are achieved automatically.  
+the command has some validators.  
 
-- command flags
-- command description
-- relations among each command
+```shell
+$ kubectl-plugin-builder add subcmd1 demo # already declared
+ERROR: the name 'subcmd1' already used in a child of demo cmd
+$ kubectl-plugin-builder add subcmd2 invalid # parent doesn't exist
+ERROR: CMD_PARENT must exist on the cli.yaml
+```
 
-## More information
+---
 
-I recommend you to refer the examples directory that are placed at the top of this repository.  
+## More Information

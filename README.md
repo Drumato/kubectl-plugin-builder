@@ -26,6 +26,10 @@ $ mv bin/kubectl-plugin-builder <PATH> # /usr/bin, etc
 - [ ] config flags support by default(`cli-runtime/pkg/genericclioptions`)
 - [ ] auto testcode generation from yaml
 - [ ] kubectl-plugin-builder's test
+- [ ] bash/zsh/ completion
+  - [ ] for kubectl-plugin-builder
+  - [ ] for kubectl plugin project
+    - work if the plugin is invoked like `kubectl plugin <>`
 
 ## [LICENSE](./LICENSE)
 
